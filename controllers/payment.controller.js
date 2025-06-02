@@ -169,19 +169,19 @@ vnpayReturn: async (req, res) => {
         await payment.save();
 
         if (vnpParams.vnp_ResponseCode === "00") {
-          res.redirect(`${frontendUrl}/payment-success?paymentId=${paymentId}`);
+          res.redirect(`${frontendUrl}/#/payment-success?paymentId=${paymentId}`);
         } else {
-          res.redirect(`${frontendUrl}/payment-failed?paymentId=${paymentId}&error=${vnpParams.vnp_ResponseCode}`);
+          res.redirect(`${frontendUrl}/#/payment-failed?paymentId=${paymentId}&error=${vnpParams.vnp_ResponseCode}`);
         }
       } else {
-        res.redirect(`${frontendUrl}/payment-failed?error=payment_not_found`);
+        res.redirect(`${frontendUrl}/#/payment-failed?error=payment_not_found`);
       }
     } else {
-      res.redirect(`${frontendUrl}/payment-failed?error=verification_failed`);
+      res.redirect(`${frontendUrl}/#/payment-failed?error=verification_failed`);
     }
   } catch (error) {
     console.log(error);
-    res.redirect(`${frontendUrl}/payment-failed?error=server_error`);
+    res.redirect(`${frontendUrl}/#/payment-failed?error=server_error`);
   }
 },
 
