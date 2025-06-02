@@ -83,6 +83,7 @@ module.exports = {
       throw error;
     }
   },
+
   countTicketSell: async (req, res) => {
     try {
       const payments = await paymentModel.find({
@@ -102,6 +103,7 @@ module.exports = {
       throw error;
     }
   },
+
   // Phương thức tạo URL thanh toán VNPay
   createVnPayUrl: async (req, res) => {
     try {
@@ -139,52 +141,52 @@ module.exports = {
       });
     }
   },
- // Gắn trực tiếp URL
 
-vnpayReturn: async (req, res) => {
-  try {
-    const vnpParams = req.query;
+  // THAY ĐỔI CHÍNH: Xử lý redirect cho BrowserRouter
+  vnpayReturn: async (req, res) => {
+    try {
+      const vnpParams = req.query;
 
-    // Xác thực thông tin trả về từ VNPay
-    const verifyResult = vnpayService.verifyReturnUrl(vnpParams);
+      // Xác thực thông tin trả về từ VNPay
+      const verifyResult = vnpayService.verifyReturnUrl(vnpParams);
 
-    if (verifyResult.isSuccess) {
-      const paymentId = vnpParams.vnp_TxnRef;
-      const payment = await paymentModel.findById(paymentId);
+      if (verifyResult.isSuccess) {
+        const paymentId = vnpParams.vnp_TxnRef;
+        const payment = await paymentModel.findById(paymentId);
 
-      if (payment) {
-        if (vnpParams.vnp_ResponseCode === "00") {
-          payment.isPending = false;
-          payment.status = "completed";
+        if (payment) {
+          if (vnpParams.vnp_ResponseCode === "00") {
+            payment.isPending = false;
+            payment.status = "completed";
+          } else {
+            payment.isPending = false;
+            payment.status = "failed";
+          }
+
+          payment.paymentMethod = "vnpay";
+          payment.vnpayTransactionId = vnpParams.vnp_TransactionNo;
+          payment.vnpayTransactionStatus = vnpParams.vnp_ResponseCode;
+          payment.vnpayPayDate = vnpParams.vnp_PayDate;
+
+          await payment.save();
+
+          // THAY ĐỔI: Không dùng # trong URL nữa
+          if (vnpParams.vnp_ResponseCode === "00") {
+            res.redirect(`${frontendUrl}/payment-success?paymentId=${paymentId}`);
+          } else {
+            res.redirect(`${frontendUrl}/payment-failed?paymentId=${paymentId}&error=${vnpParams.vnp_ResponseCode}`);
+          }
         } else {
-          payment.isPending = false;
-          payment.status = "failed";
-        }
-
-        payment.paymentMethod = "vnpay";
-        payment.vnpayTransactionId = vnpParams.vnp_TransactionNo;
-        payment.vnpayTransactionStatus = vnpParams.vnp_ResponseCode;
-        payment.vnpayPayDate = vnpParams.vnp_PayDate;
-
-        await payment.save();
-
-        if (vnpParams.vnp_ResponseCode === "00") {
-          res.redirect(`${frontendUrl}/#/payment-success?paymentId=${paymentId}`);
-        } else {
-          res.redirect(`${frontendUrl}/#/payment-failed?paymentId=${paymentId}&error=${vnpParams.vnp_ResponseCode}`);
+          res.redirect(`${frontendUrl}/payment-failed?error=payment_not_found`);
         }
       } else {
-        res.redirect(`${frontendUrl}/#/payment-failed?error=payment_not_found`);
+        res.redirect(`${frontendUrl}/payment-failed?error=verification_failed`);
       }
-    } else {
-      res.redirect(`${frontendUrl}/#/payment-failed?error=verification_failed`);
+    } catch (error) {
+      console.log(error);
+      res.redirect(`${frontendUrl}/payment-failed?error=server_error`);
     }
-  } catch (error) {
-    console.log(error);
-    res.redirect(`${frontendUrl}/#/payment-failed?error=server_error`);
-  }
-},
-
+  },
 
   // Phương thức kiểm tra trạng thái thanh toán VNPay
   checkVnPayStatus: async (req, res) => {
@@ -227,6 +229,7 @@ vnpayReturn: async (req, res) => {
       });
     }
   },
+
   // Phương thức để hủy một thanh toán đang chờ xử lý
   cancelPendingPayment: async (req, res) => {
     try {
