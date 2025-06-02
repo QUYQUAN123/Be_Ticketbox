@@ -3,6 +3,7 @@ const eventModel = require("../models/event.model");
 const nodemailer = require("nodemailer");
 const userModel = require("../models/user.model");
 const vnpayService = require("../services/vnpay.service");
+const frontendUrl = "https://ticketboxdongtai.netlify.app";
 
 module.exports = {
   list: async (req, res) => {
@@ -138,66 +139,52 @@ module.exports = {
       });
     }
   },
+ // Gắn trực tiếp URL
 
-  // Phương thức xử lý kết quả trả về từ VNPay
-  vnpayReturn: async (req, res) => {
-    try {
-      const vnpParams = req.query;
+vnpayReturn: async (req, res) => {
+  try {
+    const vnpParams = req.query;
 
-      // Xác thực thông tin trả về từ VNPay
-      const verifyResult = vnpayService.verifyReturnUrl(vnpParams);
+    // Xác thực thông tin trả về từ VNPay
+    const verifyResult = vnpayService.verifyReturnUrl(vnpParams);
 
-      if (verifyResult.isSuccess) {
-        // Tìm và cập nhật trạng thái thanh toán
-        const paymentId = vnpParams.vnp_TxnRef;
-        const payment = await paymentModel.findById(paymentId);
+    if (verifyResult.isSuccess) {
+      const paymentId = vnpParams.vnp_TxnRef;
+      const payment = await paymentModel.findById(paymentId);
 
-        if (payment) {
-          // Check if payment is successful
-          if (vnpParams.vnp_ResponseCode === "00") {
-            // Payment successful, update payment status
-            payment.isPending = false;
-            payment.status = "completed";
-          } else {
-            // Payment failed or canceled, mark payment as failed
-            payment.isPending = false;
-            payment.status = "failed";
-          }
-
-          payment.paymentMethod = "vnpay";
-          payment.vnpayTransactionId = vnpParams.vnp_TransactionNo;
-          payment.vnpayTransactionStatus = vnpParams.vnp_ResponseCode;
-          payment.vnpayPayDate = vnpParams.vnp_PayDate;
-
-          await payment.save();
-
-          // Chuyển hướng về trang thành công hoặc thất bại
-          const frontendUrl =
-            process.env.FRONTEND_URL || "https://ticketboxdongtai.netlify.app";
-
-          if (vnpParams.vnp_ResponseCode === "00") {
-            res.redirect(
-              `${frontendUrl}/payment-success?paymentId=${paymentId}`
-            );
-          } else {
-            res.redirect(
-              `${frontendUrl}/payment-failed?paymentId=${paymentId}&error=${vnpParams.vnp_ResponseCode}`
-            );
-          }
+      if (payment) {
+        if (vnpParams.vnp_ResponseCode === "00") {
+          payment.isPending = false;
+          payment.status = "completed";
         } else {
-          res.redirect(`${frontendUrl}/payment-failed?error=payment_not_found`);
+          payment.isPending = false;
+          payment.status = "failed";
+        }
+
+        payment.paymentMethod = "vnpay";
+        payment.vnpayTransactionId = vnpParams.vnp_TransactionNo;
+        payment.vnpayTransactionStatus = vnpParams.vnp_ResponseCode;
+        payment.vnpayPayDate = vnpParams.vnp_PayDate;
+
+        await payment.save();
+
+        if (vnpParams.vnp_ResponseCode === "00") {
+          res.redirect(`${frontendUrl}/payment-success?paymentId=${paymentId}`);
+        } else {
+          res.redirect(`${frontendUrl}/payment-failed?paymentId=${paymentId}&error=${vnpParams.vnp_ResponseCode}`);
         }
       } else {
-        // Thanh toán thất bại hoặc bị hủy
-        const frontendUrl = process.env.FRONTEND_URL || "https://ticketboxdongtai.netlify.app";
-        res.redirect(`${frontendUrl}/payment-failed?error=verification_failed`);
+        res.redirect(`${frontendUrl}/payment-failed?error=payment_not_found`);
       }
-    } catch (error) {
-      console.log(error);
-      const frontendUrl = process.env.FRONTEND_URL || "https://ticketboxdongtai.netlify.app";
-      res.redirect(`${frontendUrl}/payment-failed?error=server_error`);
+    } else {
+      res.redirect(`${frontendUrl}/payment-failed?error=verification_failed`);
     }
-  },
+  } catch (error) {
+    console.log(error);
+    res.redirect(`${frontendUrl}/payment-failed?error=server_error`);
+  }
+},
+
 
   // Phương thức kiểm tra trạng thái thanh toán VNPay
   checkVnPayStatus: async (req, res) => {
