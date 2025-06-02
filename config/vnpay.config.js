@@ -33,7 +33,7 @@ app.post("/api/create-qr", async (req, res) => {
   return res.status(201).json(vnpayResponse);
 });
 
-app.get("api/check-payment-vnpay", (req, res) => {
+app.get("/api/check-payment-vnpay", (req, res) => {
   // logic xử lý dữ liệu đơn hàng
   console.log(req.query);
 });
