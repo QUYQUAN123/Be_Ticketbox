@@ -26,7 +26,7 @@ app.post("/api/create-qr", async (req, res) => {
     vnp_TxnRef: findCart._id,
     vnp_OrderInfo: `${findCart._id}`,
     vnp_Locale: VnpLocale.VN,
-    vnp_ReturnUrl: "http://localhost:8000/api/check-payment-vnpay",
+    vnp_ReturnUrl: "https://be-ticketbox-1.onrender.com/api/check-payment-vnpay",
     vnp_CreateDate: dateFormat(new Date()),
     vnp_ExpireDate: dateFormat(tomorrow),
   });

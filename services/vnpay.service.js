@@ -34,7 +34,7 @@ class VnPayService {
         amount: paymentData.amount,
       }),
       vnp_Locale: VnpLocale.VN,
-      vnp_ReturnUrl: "http://localhost:8000/api/payment/vnpay-return",
+      vnp_ReturnUrl: "https://be-ticketbox-1.onrender.com/api/payment/vnpay-return",
       vnp_CreateDate: dateFormat(new Date()),
       vnp_ExpireDate: dateFormat(tomorrow),
     });
