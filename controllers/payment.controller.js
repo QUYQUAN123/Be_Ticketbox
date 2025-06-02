@@ -173,7 +173,7 @@ module.exports = {
 
           // Chuyển hướng về trang thành công hoặc thất bại
           const frontendUrl =
-            process.env.FRONTEND_URL || "http://localhost:3000";
+            process.env.FRONTEND_URL || "https://ticketboxdongtai.netlify.app/";
 
           if (vnpParams.vnp_ResponseCode === "00") {
             res.redirect(
@@ -189,12 +189,12 @@ module.exports = {
         }
       } else {
         // Thanh toán thất bại hoặc bị hủy
-        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+        const frontendUrl = process.env.FRONTEND_URL || "https://ticketboxdongtai.netlify.app/";
         res.redirect(`${frontendUrl}/payment-failed?error=verification_failed`);
       }
     } catch (error) {
       console.log(error);
-      const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+      const frontendUrl = process.env.FRONTEND_URL || "https://ticketboxdongtai.netlify.app/";
       res.redirect(`${frontendUrl}/payment-failed?error=server_error`);
     }
   },
